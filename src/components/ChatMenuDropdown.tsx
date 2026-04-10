@@ -8,9 +8,12 @@ interface ChatMenuDropdownProps {
   onViewContact: () => void;
   onSearch: () => void;
   onClearChat: () => void;
+  onWallpaper: () => void;
+  onStarred: () => void;
+  onBlock: () => void;
 }
 
-export default function ChatMenuDropdown({ open, onClose, muted, onToggleMute, onViewContact, onSearch, onClearChat }: ChatMenuDropdownProps) {
+export default function ChatMenuDropdown({ open, onClose, muted, onToggleMute, onViewContact, onSearch, onClearChat, onWallpaper, onStarred, onBlock }: ChatMenuDropdownProps) {
   if (!open) return null;
 
   return (
@@ -30,10 +33,12 @@ export default function ChatMenuDropdown({ open, onClose, muted, onToggleMute, o
           {muted ? <Volume2 className="w-4 h-4 text-muted-foreground" /> : <VolumeX className="w-4 h-4 text-muted-foreground" />}
           {muted ? "Unmute" : "Mute"}
         </button>
-        <button className="flex items-center gap-3 w-full px-4 py-3 hover:bg-secondary/60 text-sm text-foreground">
+        <button onClick={() => { onWallpaper(); onClose(); }}
+          className="flex items-center gap-3 w-full px-4 py-3 hover:bg-secondary/60 text-sm text-foreground">
           <Image className="w-4 h-4 text-muted-foreground" /> Wallpaper
         </button>
-        <button className="flex items-center gap-3 w-full px-4 py-3 hover:bg-secondary/60 text-sm text-foreground">
+        <button onClick={() => { onStarred(); onClose(); }}
+          className="flex items-center gap-3 w-full px-4 py-3 hover:bg-secondary/60 text-sm text-foreground">
           <Star className="w-4 h-4 text-muted-foreground" /> Starred messages
         </button>
         <div className="border-t border-border/50" />
@@ -41,7 +46,8 @@ export default function ChatMenuDropdown({ open, onClose, muted, onToggleMute, o
           className="flex items-center gap-3 w-full px-4 py-3 hover:bg-secondary/60 text-sm text-destructive">
           <Trash2 className="w-4 h-4" /> Clear chat
         </button>
-        <button className="flex items-center gap-3 w-full px-4 py-3 hover:bg-secondary/60 text-sm text-destructive">
+        <button onClick={() => { onBlock(); onClose(); }}
+          className="flex items-center gap-3 w-full px-4 py-3 hover:bg-secondary/60 text-sm text-destructive">
           <Ban className="w-4 h-4" /> Block
         </button>
       </div>

@@ -13,15 +13,11 @@ interface MessageBubbleProps {
   onStar: (msgId: string) => void;
   onForward: (msg: Message) => void;
   replyTo?: Message | null;
+  starred?: boolean;
+  highlight?: string;
 }
 
-function AutoLinkedText({ text }: { text: string }) {
-  // Detect URLs, emails, phone/OTP numbers
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
-  const phoneRegex = /(\+?\d[\d\s\-()]{6,}\d)/g;
-  const otpRegex = /\b(\d{4,8})\b/g;
-
+function AutoLinkedText({ text, highlight }: { text: string; highlight?: string }) {
   const combined = new RegExp(
     `(https?:\\/\\/[^\\s]+)|([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})|(\\+?\\d[\\d\\s\\-()]{6,}\\d)`,
     "g"
@@ -33,50 +29,41 @@ function AutoLinkedText({ text }: { text: string }) {
 
   while ((match = combined.exec(text)) !== null) {
     if (match.index > lastIndex) {
-      // Check for OTP in the text portion
-      const textPart = text.slice(lastIndex, match.index);
-      parts.push(...parseOTP(textPart));
+      parts.push(...parseOTP(text.slice(lastIndex, match.index)));
     }
     if (match[1]) parts.push({ type: "url", value: match[1] });
     else if (match[2]) parts.push({ type: "email", value: match[2] });
     else if (match[3]) parts.push({ type: "phone", value: match[3] });
     lastIndex = match.index + match[0].length;
   }
-
-  if (lastIndex < text.length) {
-    parts.push(...parseOTP(text.slice(lastIndex)));
-  }
-
-  if (parts.length === 0) return <>{text}</>;
+  if (lastIndex < text.length) parts.push(...parseOTP(text.slice(lastIndex)));
+  if (parts.length === 0) parts.push({ type: "text", value: text });
 
   return (
     <>
       {parts.map((part, i) => {
+        const content = part.value;
         if (part.type === "url") {
-          return (
-            <a key={i} href={part.value} target="_blank" rel="noopener noreferrer"
-              className="text-wa-teal underline break-all" onClick={e => e.stopPropagation()}>
-              {part.value}
-            </a>
-          );
+          return <a key={i} href={content} target="_blank" rel="noopener noreferrer" className="text-wa-teal underline break-all" onClick={e => e.stopPropagation()}>{content}</a>;
         }
         if (part.type === "email") {
-          return (
-            <a key={i} href={`mailto:${part.value}`}
-              className="text-wa-teal underline" onClick={e => e.stopPropagation()}>
-              {part.value}
-            </a>
-          );
+          return <a key={i} href={`mailto:${content}`} className="text-wa-teal underline" onClick={e => e.stopPropagation()}>{content}</a>;
         }
         if (part.type === "phone") {
+          return <a key={i} href={`tel:${content.replace(/[\s\-()]/g, "")}`} className="text-wa-teal underline" onClick={e => e.stopPropagation()}>{content}</a>;
+        }
+        // Highlight search matches in text
+        if (highlight && content.toLowerCase().includes(highlight.toLowerCase())) {
+          const idx = content.toLowerCase().indexOf(highlight.toLowerCase());
           return (
-            <a key={i} href={`tel:${part.value.replace(/[\s\-()]/g, "")}`}
-              className="text-wa-teal underline" onClick={e => e.stopPropagation()}>
-              {part.value}
-            </a>
+            <span key={i}>
+              {content.slice(0, idx)}
+              <mark className="bg-yellow-300/60 rounded px-0.5">{content.slice(idx, idx + highlight.length)}</mark>
+              {content.slice(idx + highlight.length)}
+            </span>
           );
         }
-        return <span key={i}>{part.value}</span>;
+        return <span key={i}>{content}</span>;
       })}
     </>
   );
@@ -96,7 +83,7 @@ function parseOTP(text: string): { type: "text" | "phone"; value: string }[] {
   return parts;
 }
 
-export default function MessageBubble({ msg, onReply, onEdit, onDelete, onUnsend, onCopy, onStar, onForward, replyTo }: MessageBubbleProps) {
+export default function MessageBubble({ msg, onReply, onEdit, onDelete, onUnsend, onCopy, onStar, onForward, replyTo, starred, highlight }: MessageBubbleProps) {
   const isMine = msg.senderId === "me";
   const { settings } = useSettings();
   const [showMenu, setShowMenu] = useState(false);
@@ -126,7 +113,6 @@ export default function MessageBubble({ msg, onReply, onEdit, onDelete, onUnsend
       swiping.current = true;
       clearTimeout(longPressTimer.current);
     }
-    // Only allow right swipe for reply
     if (dx > 0) setSwipeX(Math.min(dx, 80));
   }, []);
 
@@ -150,7 +136,6 @@ export default function MessageBubble({ msg, onReply, onEdit, onDelete, onUnsend
 
   return (
     <div className={`flex ${isMine ? "justify-end" : "justify-start"} relative group`}>
-      {/* Swipe reply indicator */}
       {swipeX > 10 && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 opacity-60" style={{ transform: `translateX(${swipeX - 40}px) translateY(-50%)` }}>
           <Reply className="w-5 h-5 text-muted-foreground" />
@@ -165,7 +150,6 @@ export default function MessageBubble({ msg, onReply, onEdit, onDelete, onUnsend
         onTouchEnd={handleTouchEnd}
         onContextMenu={handleContextMenu}
       >
-        {/* Reply reference */}
         {replyTo && (
           <div className="border-l-4 border-wa-teal bg-wa-teal/10 rounded px-2 py-1 mb-1 text-xs">
             <p className="font-semibold text-wa-teal">{replyTo.senderId === "me" ? "You" : "Them"}</p>
@@ -174,15 +158,15 @@ export default function MessageBubble({ msg, onReply, onEdit, onDelete, onUnsend
         )}
 
         <p className={`${fontSizeClass} text-foreground leading-relaxed`}>
-          <AutoLinkedText text={msg.text} />
+          <AutoLinkedText text={msg.text} highlight={highlight} />
         </p>
         <div className={`flex items-center gap-1 mt-0.5 ${isMine ? "justify-end" : "justify-start"}`}>
+          {starred && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
           <span className="text-[10.5px] text-wa-time">{msg.timestamp}</span>
           {isMine && <TickIcon status={msg.status} />}
         </div>
       </div>
 
-      {/* Long press context menu */}
       {showMenu && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
@@ -201,7 +185,7 @@ export default function MessageBubble({ msg, onReply, onEdit, onDelete, onUnsend
             </button>
             <button onClick={() => { onStar(msg.id); setShowMenu(false); }}
               className="flex items-center gap-3 w-full px-4 py-3 hover:bg-secondary/60 text-sm text-foreground">
-              <Star className="w-4 h-4" /> Star
+              <Star className={`w-4 h-4 ${starred ? "text-yellow-500 fill-yellow-500" : ""}`} /> {starred ? "Unstar" : "Star"}
             </button>
             {isMine && (
               <button onClick={() => { onEdit(msg); setShowMenu(false); }}
