@@ -6,10 +6,11 @@ import StatusScreen from "@/components/StatusScreen";
 import CallsScreen from "@/components/CallsScreen";
 import SettingsScreen from "@/components/SettingsScreen";
 import { chats, callHistory } from "@/data/mockData";
+import { SettingsProvider } from "@/contexts/SettingsContext";
 
 type Tab = "chats" | "status" | "calls" | "settings";
 
-export default function Index() {
+function AppContent() {
   const [tab, setTab] = useState<Tab>("chats");
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
 
@@ -34,5 +35,13 @@ export default function Index() {
       </div>
       <BottomNav active={tab} onTabChange={setTab} unreadChats={unreadChats} missedCalls={missedCalls} />
     </div>
+  );
+}
+
+export default function Index() {
+  return (
+    <SettingsProvider>
+      <AppContent />
+    </SettingsProvider>
   );
 }
