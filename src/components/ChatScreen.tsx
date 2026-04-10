@@ -1,6 +1,7 @@
 import { ArrowLeft, Phone, Video, MoreVertical, Smile, Paperclip, Mic, Send, X, Search as SearchIcon, ArrowDown } from "lucide-react";
 import { chats, contacts, type Chat, type Message } from "@/data/mockData";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
+import { doc, onSnapshot } from "firebase/firestore";
 import ChatInfoPanel from "@/components/ChatInfoPanel";
 import ChatMenuDropdown from "@/components/ChatMenuDropdown";
 import AttachmentModal from "@/components/AttachmentModal";
@@ -8,10 +9,12 @@ import MessageBubble from "@/components/MessageBubble";
 import { useSettings } from "@/contexts/SettingsContext";
 import { toast } from "sonner";
 import { getChatFromFirestore, addMessageToChat } from "@/lib/firebaseService";
+import { db } from "@/lib/firebase";
 
 interface ChatScreenProps {
   chatId: string;
   onBack: () => void;
+  onUpdateChat?: (updatedChat: Chat) => void;
 }
 
 // Forward picker overlay
@@ -141,7 +144,7 @@ function BlockConfirmDialog({ name, onConfirm, onClose }: { name: string; onConf
   );
 }
 
-export default function ChatScreen({ chatId, onBack }: ChatScreenProps) {
+export default function ChatScreen({ chatId, onBack, onUpdateChat }: ChatScreenProps) {
   const [chat, setChat] = useState<Chat | null>(null);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -169,9 +172,18 @@ export default function ChatScreen({ chatId, onBack }: ChatScreenProps) {
   const { settings } = useSettings();
 
   useEffect(() => {
-    async function loadChat() {
-      const firestoreChat = await getChatFromFirestore(chatId);
-      if (firestoreChat) {
+    const chatRef = doc(db, "chats", chatId);
+    const unsubscribe = onSnapshot(chatRef, snapshot => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        const firestoreChat: Chat = {
+          id: snapshot.id,
+          contact: data.contact as Chat["contact"],
+          unread: data.unread ?? 0,
+          pinned: data.pinned ?? false,
+          muted: data.muted ?? false,
+          messages: (data.messages as Message[]) ?? [],
+        };
         setChat(firestoreChat);
         setMessages(firestoreChat.messages);
         setMuted(firestoreChat.muted);
@@ -183,8 +195,11 @@ export default function ChatScreen({ chatId, onBack }: ChatScreenProps) {
           setMuted(fallback.muted);
         }
       }
-    }
-    loadChat();
+    }, error => {
+      console.error("Chat subscription error:", error);
+    });
+
+    return unsubscribe;
   }, [chatId]);
 
   useEffect(() => {
@@ -248,7 +263,11 @@ export default function ChatScreen({ chatId, onBack }: ChatScreenProps) {
 
     try {
       await addMessageToChat(chat.id, newMsg);
-      setChat(prevChat => prevChat ? { ...prevChat, messages: [...prevChat.messages, newMsg] } : prevChat);
+      const updatedChat = chat ? { ...chat, messages: [...chat.messages, newMsg] } : chat;
+      if (updatedChat) {
+        setChat(updatedChat);
+        onUpdateChat?.(updatedChat);
+      }
     } catch (error) {
       console.error("Failed to save message to Firestore:", error);
       toast.error("Unable to save message to backend");

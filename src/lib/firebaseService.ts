@@ -1,8 +1,9 @@
 import { collection, doc, getDoc, getDocs, query, orderBy, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "./firebase";
-import { chats as mockChats, type Chat, type Message } from "@/data/mockData";
+import { chats as mockChats, callHistory as mockCallHistory, type CallEntry, type Chat, type Message } from "@/data/mockData";
 
 const chatsCollection = collection(db, "chats");
+const callsCollection = collection(db, "calls");
 
 export async function seedChatsIfEmpty(): Promise<void> {
   const snapshot = await getDocs(chatsCollection);
@@ -20,6 +21,59 @@ export async function seedChatsIfEmpty(): Promise<void> {
   );
 
   await Promise.all(seedPromises);
+}
+
+export async function seedCallsIfEmpty(): Promise<void> {
+  const snapshot = await getDocs(callsCollection);
+  if (!snapshot.empty) return;
+
+  const seedPromises = mockCallHistory.map((call) =>
+    setDoc(doc(callsCollection, call.id), {
+      contact: call.contact,
+      type: call.type,
+      direction: call.direction,
+      time: call.time,
+      duration: call.duration ?? null,
+      createdAt: new Date(),
+    })
+  );
+
+  await Promise.all(seedPromises);
+}
+
+export async function getCallHistoryFromFirestore(): Promise<CallEntry[]> {
+  const snapshot = await getDocs(query(callsCollection, orderBy("createdAt", "desc")));
+  if (snapshot.empty) return [];
+
+  return snapshot.docs.map(docSnap => {
+    const data = docSnap.data() as {
+      contact: CallEntry["contact"];
+      type: CallEntry["type"];
+      direction: CallEntry["direction"];
+      time: string;
+      duration?: string | null;
+    };
+
+    return {
+      id: docSnap.id,
+      contact: data.contact,
+      type: data.type,
+      direction: data.direction,
+      time: data.time,
+      duration: data.duration ?? undefined,
+    };
+  });
+}
+
+export async function logCallToFirestore(call: CallEntry): Promise<void> {
+  await setDoc(doc(callsCollection, call.id), {
+    contact: call.contact,
+    type: call.type,
+    direction: call.direction,
+    time: call.time,
+    duration: call.duration ?? null,
+    createdAt: new Date(),
+  });
 }
 
 export async function getChatsFromFirestore(): Promise<Chat[]> {
