@@ -1,16 +1,38 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import BottomNav from "@/components/BottomNav";
+import ChatListScreen from "@/components/ChatListScreen";
+import ChatScreen from "@/components/ChatScreen";
+import StatusScreen from "@/components/StatusScreen";
+import CallsScreen from "@/components/CallsScreen";
+import SettingsScreen from "@/components/SettingsScreen";
+import { chats, callHistory } from "@/data/mockData";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+type Tab = "chats" | "status" | "calls" | "settings";
+
+export default function Index() {
+  const [tab, setTab] = useState<Tab>("chats");
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+
+  const unreadChats = chats.reduce((sum, c) => sum + c.unread, 0);
+  const missedCalls = callHistory.filter(c => c.direction === "missed").length;
+
+  if (activeChatId) {
+    return (
+      <div className="h-[100dvh] flex flex-col overflow-hidden max-w-lg mx-auto bg-card">
+        <ChatScreen chatId={activeChatId} onBack={() => setActiveChatId(null)} />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="h-[100dvh] flex flex-col overflow-hidden max-w-lg mx-auto bg-card">
+      <div className="flex-1 overflow-hidden pb-16">
+        {tab === "chats" && <ChatListScreen onOpenChat={setActiveChatId} />}
+        {tab === "status" && <StatusScreen />}
+        {tab === "calls" && <CallsScreen />}
+        {tab === "settings" && <SettingsScreen />}
+      </div>
+      <BottomNav active={tab} onTabChange={setTab} unreadChats={unreadChats} missedCalls={missedCalls} />
     </div>
   );
-};
-
-const Index = PlaceholderIndex;
-
-export default Index;
+}
