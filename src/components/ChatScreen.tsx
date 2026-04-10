@@ -1,5 +1,5 @@
 import { ArrowLeft, Phone, Video, MoreVertical, Smile, Paperclip, Mic, Send, X, Search as SearchIcon, ArrowDown } from "lucide-react";
-import { chats, contacts, type Message } from "@/data/mockData";
+import { chats, contacts, type Chat, type Message } from "@/data/mockData";
 import { useState, useRef, useEffect, useCallback } from "react";
 import ChatInfoPanel from "@/components/ChatInfoPanel";
 import ChatMenuDropdown from "@/components/ChatMenuDropdown";
@@ -7,6 +7,7 @@ import AttachmentModal from "@/components/AttachmentModal";
 import MessageBubble from "@/components/MessageBubble";
 import { useSettings } from "@/contexts/SettingsContext";
 import { toast } from "sonner";
+import { getChatFromFirestore, addMessageToChat } from "@/lib/firebaseService";
 
 interface ChatScreenProps {
   chatId: string;
@@ -141,13 +142,13 @@ function BlockConfirmDialog({ name, onConfirm, onClose }: { name: string; onConf
 }
 
 export default function ChatScreen({ chatId, onBack }: ChatScreenProps) {
-  const chat = chats.find(c => c.id === chatId);
+  const [chat, setChat] = useState<Chat | null>(null);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<Message[]>(chat?.messages ?? []);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [showInfo, setShowInfo] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showAttach, setShowAttach] = useState(false);
-  const [muted, setMuted] = useState(chat?.muted ?? false);
+  const [muted, setMuted] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingMsg, setEditingMsg] = useState<Message | null>(null);
   const [replyMap, setReplyMap] = useState<Record<string, Message>>({});
@@ -166,6 +167,25 @@ export default function ChatScreen({ chatId, onBack }: ChatScreenProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileAccept, setFileAccept] = useState("");
   const { settings } = useSettings();
+
+  useEffect(() => {
+    async function loadChat() {
+      const firestoreChat = await getChatFromFirestore(chatId);
+      if (firestoreChat) {
+        setChat(firestoreChat);
+        setMessages(firestoreChat.messages);
+        setMuted(firestoreChat.muted);
+      } else {
+        const fallback = chats.find(c => c.id === chatId);
+        if (fallback) {
+          setChat(fallback);
+          setMessages(fallback.messages);
+          setMuted(fallback.muted);
+        }
+      }
+    }
+    loadChat();
+  }, [chatId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -199,26 +219,40 @@ export default function ChatScreen({ chatId, onBack }: ChatScreenProps) {
     }]);
   };
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const handleSend = async () => {
+    if (!input.trim() || !chat) return;
     if (editingMsg) {
       setMessages(prev => prev.map(m => m.id === editingMsg.id ? { ...m, text: input.trim() } : m));
       setEditingMsg(null);
       setInput("");
       return;
     }
+
     const newId = `new-${Date.now()}`;
     const newMsg: Message = {
-      id: newId, senderId: "me", text: input.trim(),
+      id: newId,
+      senderId: "me",
+      text: input.trim(),
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      status: "sent" as const, type: "text" as const,
+      status: "sent" as const,
+      type: "text" as const,
     };
+
     if (replyingTo) {
       setReplyMap(prev => ({ ...prev, [newId]: replyingTo }));
       setReplyingTo(null);
     }
+
     setMessages(prev => [...prev, newMsg]);
     setInput("");
+
+    try {
+      await addMessageToChat(chat.id, newMsg);
+      setChat(prevChat => prevChat ? { ...prevChat, messages: [...prevChat.messages, newMsg] } : prevChat);
+    } catch (error) {
+      console.error("Failed to save message to Firestore:", error);
+      toast.error("Unable to save message to backend");
+    }
   };
 
   const handleReply = (msg: Message) => setReplyingTo(msg);

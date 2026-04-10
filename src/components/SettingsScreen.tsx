@@ -1,8 +1,8 @@
 import { Key, Bell, Lock, MessageSquare, HelpCircle, Users, Palette, Database, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { PrivacySettings, NotificationSettings, ChatSettings, AccountSettings, StorageSettings, AppearanceSettings } from "@/components/SettingsSubPages";
+import { PrivacySettings, NotificationSettings, ChatSettings, AccountSettings, StorageSettings, AppearanceSettings, HelpSettings, InviteSettings, PrivacyPolicy } from "@/components/SettingsSubPages";
 
-type SubPage = null | "account" | "privacy" | "appearance" | "chats" | "notifications" | "storage";
+type SubPage = null | "account" | "privacy" | "appearance" | "chats" | "notifications" | "storage" | "help" | "invite" | "privacyPolicy";
 
 const settingsItems: { icon: typeof Key; label: string; desc: string; page: SubPage }[] = [
   { icon: Key, label: "Account", desc: "Security, two-step verification, delete account", page: "account" },
@@ -11,8 +11,8 @@ const settingsItems: { icon: typeof Key; label: string; desc: string; page: SubP
   { icon: MessageSquare, label: "Chats", desc: "Font size, enter to send, media download", page: "chats" },
   { icon: Bell, label: "Notifications", desc: "Message & group tones, vibrate", page: "notifications" },
   { icon: Database, label: "Storage and Data", desc: "Storage usage, network usage", page: "storage" },
-  { icon: HelpCircle, label: "Help", desc: "FAQ, contact us, privacy policy", page: null },
-  { icon: Users, label: "Invite a friend", desc: "", page: null },
+  { icon: HelpCircle, label: "Help", desc: "FAQ, support, privacy policy", page: "help" },
+  { icon: Users, label: "Invite a friend", desc: "Send a chat invite link", page: "invite" },
 ];
 
 export default function SettingsScreen() {
@@ -24,6 +24,9 @@ export default function SettingsScreen() {
   if (subPage === "account") return <AccountSettings onBack={() => setSubPage(null)} />;
   if (subPage === "storage") return <StorageSettings onBack={() => setSubPage(null)} />;
   if (subPage === "appearance") return <AppearanceSettings onBack={() => setSubPage(null)} />;
+  if (subPage === "help") return <HelpSettings onBack={() => setSubPage(null)} onViewPrivacyPolicy={() => setSubPage("privacyPolicy")} onViewPrivacyPolicy={() => setSubPage("privacyPolicy")} />;
+  if (subPage === "invite") return <InviteSettings onBack={() => setSubPage(null)} />;
+  if (subPage === "privacyPolicy") return <PrivacyPolicy onBack={() => setSubPage(null)} />;
 
   return (
     <div className="flex flex-col h-full">
@@ -33,7 +36,10 @@ export default function SettingsScreen() {
 
       <div className="flex-1 overflow-y-auto bg-card scrollbar-hide">
         {/* Profile card */}
-        <button className="flex items-center gap-3 w-full px-4 py-4 hover:bg-secondary/60 transition-colors border-b border-border/50">
+        <button
+          onClick={() => setSubPage("account")}
+          className="flex items-center gap-3 w-full px-4 py-4 hover:bg-secondary/60 transition-colors border-b border-border/50"
+        >
           <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-3xl flex-shrink-0">👤</div>
           <div className="flex-1 min-w-0 text-left">
             <p className="font-semibold text-lg text-foreground">You</p>

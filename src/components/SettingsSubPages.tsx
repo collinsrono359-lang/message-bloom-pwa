@@ -1,8 +1,11 @@
 import { ArrowLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
 import { useSettings } from "@/contexts/SettingsContext";
+import { toast } from "sonner";
 
 interface SettingsSubPageProps {
   onBack: () => void;
+  onViewPrivacyPolicy?: () => void;
 }
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
@@ -142,6 +145,21 @@ export function ChatSettings({ onBack }: SettingsSubPageProps) {
 
 export function AccountSettings({ onBack }: SettingsSubPageProps) {
   const { settings, updateSetting } = useSettings();
+
+  const handleChangeNumber = () => {
+    toast.info("To change your number, verify the new number in a real app.");
+  };
+
+  const handleRequestInfo = () => {
+    toast.success("Account info request submitted. You will be notified when ready.");
+  };
+
+  const handleDeleteAccount = () => {
+    if (window.confirm("Delete your account permanently? This cannot be undone.")) {
+      toast.success("Your account has been deleted (demo mode).");
+    }
+  };
+
   return (
     <div className="flex flex-col h-full animate-slide-up">
       <div className="wa-header px-2 pt-10 pb-3 flex items-center gap-2">
@@ -165,16 +183,25 @@ export function AccountSettings({ onBack }: SettingsSubPageProps) {
           <Toggle checked={settings.fingerprintLock} onChange={v => updateSetting("fingerprintLock", v)} />
         </div>
         <div className="border-t border-border/50 mt-2" />
-        <button className="w-full px-4 py-4 text-left hover:bg-secondary/60 transition-colors">
+        <button
+          onClick={handleChangeNumber}
+          className="w-full px-4 py-4 text-left hover:bg-secondary/60 transition-colors"
+        >
           <p className="text-[15px] text-foreground">Change number</p>
-          <p className="text-xs text-muted-foreground">Change your phone number</p>
+          <p className="text-xs text-muted-foreground">Update your phone number</p>
         </button>
-        <button className="w-full px-4 py-4 text-left hover:bg-secondary/60 transition-colors">
+        <button
+          onClick={handleRequestInfo}
+          className="w-full px-4 py-4 text-left hover:bg-secondary/60 transition-colors"
+        >
           <p className="text-[15px] text-foreground">Request account info</p>
           <p className="text-xs text-muted-foreground">Export your account information</p>
         </button>
         <div className="border-t border-border/50 mt-2" />
-        <button className="w-full px-4 py-4 text-left hover:bg-secondary/60 transition-colors">
+        <button
+          onClick={handleDeleteAccount}
+          className="w-full px-4 py-4 text-left hover:bg-secondary/60 transition-colors"
+        >
           <p className="text-[15px] text-destructive font-medium">Delete my account</p>
         </button>
       </div>
@@ -214,7 +241,11 @@ export function StorageSettings({ onBack }: SettingsSubPageProps) {
         </div>
         <p className="px-4 pt-4 pb-1 text-xs font-semibold text-wa-teal uppercase tracking-wider">Chats</p>
         {storageItems.map(item => (
-          <button key={item.label} className="flex items-center gap-3 w-full px-4 py-3 hover:bg-secondary/60 transition-colors">
+          <button
+            key={item.label}
+            onClick={() => toast.info(`${item.label} uses ${item.size} of storage.`)}
+            className="flex items-center gap-3 w-full px-4 py-3 hover:bg-secondary/60 transition-colors"
+          >
             <div className={`w-10 h-10 rounded-full ${item.color} opacity-80`} />
             <div className="flex-1 text-left">
               <p className="text-[15px] text-foreground">{item.label}</p>
@@ -270,6 +301,166 @@ export function AppearanceSettings({ onBack }: SettingsSubPageProps) {
               <span className="text-xs font-medium text-foreground/70">{w.label}</span>
             </button>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function HelpSettings({ onBack, onViewPrivacyPolicy }: SettingsSubPageProps) {
+  const faqs = [
+    {
+      question: "How do I update my privacy settings?",
+      answer: "Open Privacy in Settings to manage last seen, read receipts, profile visibility, and disappearing messages.",
+    },
+    {
+      question: "How can I invite a friend?",
+      answer: "Use Invite a friend to send an email invitation or copy a shareable message quickly.",
+    },
+    {
+      question: "Can I use status updates with photos or videos?",
+      answer: "Yes — add a new status from the Status tab. Images are resized to 10MP and videos are limited to 10MB.",
+    },
+    {
+      question: "Where can I read the privacy policy?",
+      answer: "Tap Privacy policy below to read the full version inside the app.",
+    },
+  ];
+
+  return (
+    <div className="flex flex-col h-full animate-slide-up">
+      <div className="wa-header px-2 pt-10 pb-3 flex items-center gap-2">
+        <button onClick={onBack} className="p-1.5 rounded-full hover:bg-primary/20"><ArrowLeft className="w-5 h-5" /></button>
+        <h1 className="text-lg font-semibold">Help</h1>
+      </div>
+      <div className="flex-1 overflow-y-auto bg-card scrollbar-hide">
+        <div className="p-4 space-y-4">
+          <div className="rounded-3xl bg-secondary p-4 border border-border/50 space-y-3">
+            <h2 className="text-sm font-semibold text-foreground">FAQ</h2>
+            {faqs.map(faq => (
+              <div key={faq.question} className="rounded-2xl bg-background border border-border p-3">
+                <p className="text-[15px] font-medium text-foreground">{faq.question}</p>
+                <p className="text-sm text-muted-foreground mt-2">{faq.answer}</p>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => window.open("mailto:support@chatapp.example.com")}
+            className="w-full rounded-2xl bg-wa-green px-4 py-3 text-sm font-medium text-white hover:bg-wa-green/90 transition-colors"
+          >
+            Contact support
+          </button>
+          <button
+            onClick={onViewPrivacyPolicy}
+            className="w-full rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary/60 transition-colors"
+          >
+            Privacy policy
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function PrivacyPolicy({ onBack }: SettingsSubPageProps) {
+  return (
+    <div className="flex flex-col h-full animate-slide-up">
+      <div className="wa-header px-2 pt-10 pb-3 flex items-center gap-2">
+        <button onClick={onBack} className="p-1.5 rounded-full hover:bg-primary/20"><ArrowLeft className="w-5 h-5" /></button>
+        <h1 className="text-lg font-semibold">Privacy Policy</h1>
+      </div>
+      <div className="flex-1 overflow-y-auto bg-card scrollbar-hide px-4 pb-6">
+        <div className="rounded-3xl bg-secondary p-5 border border-border/50 space-y-4">
+          <p className="text-sm text-muted-foreground">This privacy policy explains how ChatApp collects and handles your information while using the app.</p>
+          <div className="space-y-3">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">Data collection</h2>
+              <p className="text-sm text-muted-foreground">We only collect the information you provide, such as your profile details and chat messages. Your data is stored securely in Firebase and is never shared without permission.</p>
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">Message privacy</h2>
+              <p className="text-sm text-muted-foreground">Messages and status uploads are kept private within the app. You control who can see your profile, last seen, and status updates.</p>
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">Status uploads</h2>
+              <p className="text-sm text-muted-foreground">Photo uploads are optimized for performance and resized to a maximum of 10 megapixels. Video uploads are limited to 10 MB to keep status updates fast.</p>
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">Contact</h2>
+              <p className="text-sm text-muted-foreground">If you have questions about privacy, email support@chatapp.example.com.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function InviteSettings({ onBack }: SettingsSubPageProps) {
+  const inviteText = "Join me on ChatApp! Download the app and chat securely.";
+  const [email, setEmail] = useState("");
+
+  const copyInvite = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteText);
+      toast.success("Invite text copied to clipboard");
+    } catch {
+      toast.error("Unable to copy invite text");
+    }
+  };
+
+  const handleSendInvite = () => {
+    const normalizedEmail = email.trim();
+    const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
+
+    if (!validEmail) {
+      toast.error("Enter a valid email address to send an invite.");
+      return;
+    }
+
+    toast.success(`Invitation sent to ${normalizedEmail}`);
+    setEmail("");
+  };
+
+  return (
+    <div className="flex flex-col h-full animate-slide-up">
+      <div className="wa-header px-2 pt-10 pb-3 flex items-center gap-2">
+        <button onClick={onBack} className="p-1.5 rounded-full hover:bg-primary/20"><ArrowLeft className="w-5 h-5" /></button>
+        <h1 className="text-lg font-semibold">Invite a friend</h1>
+      </div>
+      <div className="flex-1 overflow-y-auto bg-card scrollbar-hide">
+        <div className="p-4 space-y-4">
+          <div className="rounded-3xl bg-secondary p-4 border border-border/50 space-y-3">
+            <p className="text-sm text-muted-foreground">Send an invite by email or copy the invite text to share it in any app.</p>
+            <div>
+              <label className="text-sm font-medium text-foreground">Friend&apos;s email</label>
+              <input
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                type="email"
+                placeholder="name@example.com"
+                className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-wa-teal"
+              />
+            </div>
+            <button
+              onClick={handleSendInvite}
+              className="w-full rounded-2xl bg-wa-teal px-4 py-3 text-sm font-medium text-white hover:bg-wa-teal/90 transition-colors"
+            >
+              Send invitation
+            </button>
+          </div>
+          <div className="rounded-3xl bg-secondary p-4 border border-border/50">
+            <p className="text-sm text-muted-foreground">Invite text</p>
+            <div className="mt-3 rounded-2xl bg-background border border-border p-3 text-sm text-foreground">
+              {inviteText}
+            </div>
+          </div>
+          <button
+            onClick={copyInvite}
+            className="w-full rounded-2xl bg-wa-teal px-4 py-3 text-sm font-medium text-white hover:bg-wa-teal/90 transition-colors"
+          >
+            Copy invite
+          </button>
         </div>
       </div>
     </div>

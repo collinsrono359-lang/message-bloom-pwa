@@ -1,12 +1,13 @@
 import { Search, MoreVertical, Pin, VolumeX, Check, CheckCheck } from "lucide-react";
-import { chats, type Chat } from "@/data/mockData";
+import { type Chat } from "@/data/mockData";
 import { useState } from "react";
 
 interface ChatListScreenProps {
+  chats: Chat[];
   onOpenChat: (chatId: string) => void;
 }
 
-export default function ChatListScreen({ onOpenChat }: ChatListScreenProps) {
+export default function ChatListScreen({ chats, onOpenChat }: ChatListScreenProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const filtered = chats.filter(c =>
@@ -19,7 +20,14 @@ export default function ChatListScreen({ onOpenChat }: ChatListScreenProps) {
     return 0;
   });
 
-  const lastMsg = (chat: Chat) => chat.messages[chat.messages.length - 1];
+  const lastMsg = (chat: Chat) => chat.messages[chat.messages.length - 1] ?? {
+    id: "",
+    senderId: "",
+    text: "No messages yet",
+    timestamp: "",
+    status: "sent" as const,
+    type: "text" as const,
+  };
 
   const TickIcon = ({ status }: { status: string }) => {
     if (status === "sent") return <Check className="w-4 h-4 text-wa-tick" />;
@@ -52,7 +60,11 @@ export default function ChatListScreen({ onOpenChat }: ChatListScreenProps) {
 
       {/* Chat list */}
       <div className="flex-1 overflow-y-auto bg-card scrollbar-hide">
-        {sorted.map(chat => {
+        {sorted.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+            No chats available.
+          </div>
+        ) : sorted.map(chat => {
           const last = lastMsg(chat);
           const isSent = last.senderId === "me";
           return (
