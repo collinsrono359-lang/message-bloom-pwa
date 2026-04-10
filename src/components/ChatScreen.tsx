@@ -8,7 +8,7 @@ import AttachmentModal from "@/components/AttachmentModal";
 import MessageBubble from "@/components/MessageBubble";
 import { useSettings } from "@/contexts/SettingsContext";
 import { toast } from "sonner";
-import { getChatFromFirestore, addMessageToChat } from "@/lib/firebaseService";
+import { addMessageToChat } from "@/lib/firebaseService";
 import { db } from "@/lib/firebase";
 
 interface ChatScreenProps {
@@ -165,6 +165,7 @@ export default function ChatScreen({ chatId, onBack, onUpdateChat }: ChatScreenP
   const [showContactPicker, setShowContactPicker] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [blocked, setBlocked] = useState(false);
+  const [loadingChat, setLoadingChat] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -172,6 +173,7 @@ export default function ChatScreen({ chatId, onBack, onUpdateChat }: ChatScreenP
   const { settings } = useSettings();
 
   useEffect(() => {
+    setLoadingChat(true);
     const chatRef = doc(db, "chats", chatId);
     const unsubscribe = onSnapshot(chatRef, snapshot => {
       if (snapshot.exists()) {
@@ -193,10 +195,24 @@ export default function ChatScreen({ chatId, onBack, onUpdateChat }: ChatScreenP
           setChat(fallback);
           setMessages(fallback.messages);
           setMuted(fallback.muted);
+        } else {
+          setChat(null);
+          setMessages([]);
         }
       }
+      setLoadingChat(false);
     }, error => {
       console.error("Chat subscription error:", error);
+      const fallback = chats.find(c => c.id === chatId);
+      if (fallback) {
+        setChat(fallback);
+        setMessages(fallback.messages);
+        setMuted(fallback.muted);
+      } else {
+        setChat(null);
+        setMessages([]);
+      }
+      setLoadingChat(false);
     });
 
     return unsubscribe;
@@ -210,7 +226,24 @@ export default function ChatScreen({ chatId, onBack, onUpdateChat }: ChatScreenP
     if (showSearch) searchInputRef.current?.focus();
   }, [showSearch]);
 
-  if (!chat) return null;
+  if (loadingChat) {
+    return (
+      <div className="h-[100dvh] flex items-center justify-center text-sm text-muted-foreground">
+        Loading chat...
+      </div>
+    );
+  }
+
+  if (!chat) {
+    return (
+      <div className="h-[100dvh] flex items-center justify-center text-center px-4">
+        <div>
+          <p className="text-sm text-foreground font-medium">Chat could not be loaded.</p>
+          <p className="text-xs text-muted-foreground mt-2">Please return to the chat list and try again.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (showInfo) {
     return (
