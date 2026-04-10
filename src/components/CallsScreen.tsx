@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Phone, Video, MoreVertical, PhoneIncoming, PhoneOutgoing, PhoneMissed, Copy, Wifi, X } from "lucide-react";
 import Peer, { DataConnection, MediaConnection } from "peerjs";
 import { toast } from "sonner";
@@ -35,6 +35,7 @@ export default function CallsScreen({ callHistory, onLogCall }: CallsScreenProps
   const [latency, setLatency] = useState<number | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
   const [incomingCall, setIncomingCall] = useState<MediaConnection | null>(null);
   const [dataConn, setDataConn] = useState<DataConnection | null>(null);
   const [showIncoming, setShowIncoming] = useState(false);
@@ -70,7 +71,7 @@ export default function CallsScreen({ callHistory, onLogCall }: CallsScreenProps
         setStatus("Data channel connected");
         pingConnection(conn);
       });
-      conn.on("data", handleDataMessage);
+      conn.on("data", data => handleDataMessage(data, conn));
       conn.on("close", () => {
         setStatus("Data channel closed");
         setLatency(null);
@@ -87,11 +88,12 @@ export default function CallsScreen({ callHistory, onLogCall }: CallsScreenProps
 
     return () => {
       peer.destroy();
-      if (localStream) localStream.getTracks().forEach(track => track.stop());
+      if (localStreamRef.current) localStreamRef.current.getTracks().forEach(track => track.stop());
     };
-  }, []);
+  }, [handleDataMessage]);
 
   useEffect(() => {
+    localStreamRef.current = localStream;
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
     }
@@ -103,15 +105,16 @@ export default function CallsScreen({ callHistory, onLogCall }: CallsScreenProps
     }
   }, [remoteStream]);
 
-  const handleDataMessage = (data: any) => {
-    if (!data || typeof data !== "object") return;
-    if (data.type === "ping") {
-      dataConn?.send({ type: "pong", ts: data.ts });
+  const handleDataMessage = useCallback((data: unknown, conn?: DataConnection) => {
+    if (typeof data !== "object" || data === null) return;
+    const message = data as { type?: string; ts?: number };
+    if (message.type === "ping") {
+      conn?.send({ type: "pong", ts: message.ts });
     }
-    if (data.type === "pong") {
-      setLatency(Date.now() - data.ts);
+    if (message.type === "pong" && typeof message.ts === "number") {
+      setLatency(Date.now() - message.ts);
     }
-  };
+  }, []);
 
   const pingConnection = (conn: DataConnection) => {
     if (!conn.open) return;

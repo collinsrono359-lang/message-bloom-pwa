@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { MoreVertical, Camera, Edit3, Download } from "lucide-react";
-import { statusUpdates } from "@/data/mockData";
+import { statusUpdates, type StatusUpdate } from "@/data/mockData";
 import { toast } from "sonner";
 
 interface StatusItem {
@@ -17,7 +17,7 @@ interface StatusItem {
 const MAX_IMAGE_PIXELS = 10_000_000;
 const MAX_VIDEO_BYTES = 10 * 1024 * 1024;
 
-function getStatusItem(item: any): StatusItem {
+function getStatusItem(item: StatusUpdate): StatusItem {
   return {
     id: item.id,
     contact: item.contact,
@@ -92,7 +92,7 @@ export default function StatusScreen() {
     try {
       mediaUrl = URL.createObjectURL(file);
       let blob: Blob | undefined = file;
-      let mediaType: "image" | "video" = isImage ? "image" : "video";
+      const mediaType: "image" | "video" = isImage ? "image" : "video";
 
       if (isImage) {
         const compressed = await compressImageFile(file);
@@ -143,8 +143,9 @@ export default function StatusScreen() {
   };
 
   useEffect(() => {
+    const urls = createdUrls.current;
     return () => {
-      createdUrls.current.forEach(url => URL.revokeObjectURL(url));
+      urls.forEach(url => URL.revokeObjectURL(url));
     };
   }, []);
 

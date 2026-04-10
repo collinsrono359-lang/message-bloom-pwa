@@ -19,7 +19,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   );
 }
 
-function SelectOption({ label, value, options, onChange }: { label: string; value: string; options: { label: string; value: string }[]; onChange: (v: string) => void }) {
+function SelectOption<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: { label: string; value: T }[]; onChange: (v: T) => void }) {
   return (
     <div className="px-4 py-3">
       <p className="text-[15px] text-foreground mb-2">{label}</p>
@@ -49,8 +49,8 @@ export function PrivacySettings({ onBack }: SettingsSubPageProps) {
       <div className="flex-1 overflow-y-auto bg-card scrollbar-hide">
         <p className="px-4 pt-4 pb-1 text-xs font-semibold text-wa-teal uppercase tracking-wider">Who can see my personal info</p>
         <SelectOption label="Last seen" value={settings.lastSeenVisible ? "everyone" : "nobody"} options={[{ label: "Everyone", value: "everyone" }, { label: "My contacts", value: "contacts" }, { label: "Nobody", value: "nobody" }]} onChange={v => updateSetting("lastSeenVisible", v === "everyone")} />
-        <SelectOption label="Profile photo" value={settings.profilePhotoVisible} options={[{ label: "Everyone", value: "everyone" }, { label: "My contacts", value: "contacts" }, { label: "Nobody", value: "nobody" }]} onChange={v => updateSetting("profilePhotoVisible", v as any)} />
-        <SelectOption label="About" value={settings.aboutVisible} options={[{ label: "Everyone", value: "everyone" }, { label: "My contacts", value: "contacts" }, { label: "Nobody", value: "nobody" }]} onChange={v => updateSetting("aboutVisible", v as any)} />
+        <SelectOption label="Profile photo" value={settings.profilePhotoVisible} options={[{ label: "Everyone", value: "everyone" }, { label: "My contacts", value: "contacts" }, { label: "Nobody", value: "nobody" }]} onChange={v => updateSetting("profilePhotoVisible", v)} />
+        <SelectOption label="About" value={settings.aboutVisible} options={[{ label: "Everyone", value: "everyone" }, { label: "My contacts", value: "contacts" }, { label: "Nobody", value: "nobody" }]} onChange={v => updateSetting("aboutVisible", v)} />
         <div className="border-t border-border/50 mt-2" />
         <div className="flex items-center justify-between px-4 py-4">
           <div>
@@ -68,7 +68,7 @@ export function PrivacySettings({ onBack }: SettingsSubPageProps) {
           <Toggle checked={settings.disappearingMessages} onChange={v => updateSetting("disappearingMessages", v)} />
         </div>
         {settings.disappearingMessages && (
-          <SelectOption label="Default timer" value={settings.disappearingDuration} options={[{ label: "24 hours", value: "24h" }, { label: "7 days", value: "7d" }, { label: "90 days", value: "90d" }]} onChange={v => updateSetting("disappearingDuration", v as any)} />
+          <SelectOption label="Default timer" value={settings.disappearingDuration} options={[{ label: "24 hours", value: "24h" }, { label: "7 days", value: "7d" }, { label: "90 days", value: "90d" }]} onChange={v => updateSetting("disappearingDuration", v)} />
         )}
       </div>
     </div>
@@ -118,8 +118,8 @@ export function ChatSettings({ onBack }: SettingsSubPageProps) {
       </div>
       <div className="flex-1 overflow-y-auto bg-card scrollbar-hide">
         <p className="px-4 pt-4 pb-1 text-xs font-semibold text-wa-teal uppercase tracking-wider">Display</p>
-        <SelectOption label="Font size" value={settings.fontSize} options={[{ label: "Small", value: "small" }, { label: "Medium", value: "medium" }, { label: "Large", value: "large" }]} onChange={v => updateSetting("fontSize", v as any)} />
-        <SelectOption label="Theme" value={settings.theme} options={[{ label: "Light", value: "light" }, { label: "Dark", value: "dark" }, { label: "System", value: "system" }]} onChange={v => updateSetting("theme", v as any)} />
+        <SelectOption label="Font size" value={settings.fontSize} options={[{ label: "Small", value: "small" }, { label: "Medium", value: "medium" }, { label: "Large", value: "large" }]} onChange={v => updateSetting("fontSize", v)} />
+        <SelectOption label="Theme" value={settings.theme} options={[{ label: "Light", value: "light" }, { label: "Dark", value: "dark" }, { label: "System", value: "system" }]} onChange={v => updateSetting("theme", v)} />
         <div className="border-t border-border/50 mt-2" />
         <p className="px-4 pt-4 pb-1 text-xs font-semibold text-wa-teal uppercase tracking-wider">Chat settings</p>
         <div className="flex items-center justify-between px-4 py-3.5">
@@ -129,7 +129,7 @@ export function ChatSettings({ onBack }: SettingsSubPageProps) {
           </div>
           <Toggle checked={settings.enterToSend} onChange={v => updateSetting("enterToSend", v)} />
         </div>
-        <SelectOption label="Media auto-download" value={settings.mediaAutoDownload} options={[{ label: "Wi-Fi only", value: "wifi" }, { label: "Wi-Fi & Mobile", value: "wifi_mobile" }, { label: "Never", value: "never" }]} onChange={v => updateSetting("mediaAutoDownload", v as any)} />
+        <SelectOption label="Media auto-download" value={settings.mediaAutoDownload} options={[{ label: "Wi-Fi only", value: "wifi" }, { label: "Wi-Fi & Mobile", value: "wifi_mobile" }, { label: "Never", value: "never" }]} onChange={v => updateSetting("mediaAutoDownload", v)} />
         <div className="border-t border-border/50 mt-2" />
         <div className="flex items-center justify-between px-4 py-3.5">
           <div>
@@ -288,7 +288,7 @@ export function AppearanceSettings({ onBack }: SettingsSubPageProps) {
       </div>
       <div className="flex-1 overflow-y-auto bg-card scrollbar-hide">
         <p className="px-4 pt-4 pb-1 text-xs font-semibold text-wa-teal uppercase tracking-wider">Theme</p>
-        <SelectOption label="" value={settings.theme} options={[{ label: "Light", value: "light" }, { label: "Dark", value: "dark" }, { label: "System default", value: "system" }]} onChange={v => updateSetting("theme", v as any)} />
+        <SelectOption label="" value={settings.theme} options={[{ label: "Light", value: "light" }, { label: "Dark", value: "dark" }, { label: "System default", value: "system" }]} onChange={v => updateSetting("theme", v)} />
         <div className="border-t border-border/50 mt-2" />
         <p className="px-4 pt-4 pb-2 text-xs font-semibold text-wa-teal uppercase tracking-wider">Chat wallpaper</p>
         <div className="px-4 pb-4 grid grid-cols-3 gap-3">
