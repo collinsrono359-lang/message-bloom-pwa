@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -57,6 +60,25 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // WhatsApp colors
+        wa: {
+          header: "hsl(var(--wa-header))",
+          "header-foreground": "hsl(var(--wa-header-foreground))",
+          teal: "hsl(var(--wa-teal))",
+          "teal-dark": "hsl(var(--wa-teal-dark))",
+          green: "hsl(var(--wa-green))",
+          "green-light": "hsl(var(--wa-green-light))",
+          bg: "hsl(var(--wa-bg))",
+          "chat-bg": "hsl(var(--wa-chat-bg))",
+          "bubble-out": "hsl(var(--wa-bubble-out))",
+          "bubble-in": "hsl(var(--wa-bubble-in))",
+          "tab-active": "hsl(var(--wa-tab-active))",
+          "tab-inactive": "hsl(var(--wa-tab-inactive))",
+          badge: "hsl(var(--wa-badge))",
+          time: "hsl(var(--wa-time))",
+          tick: "hsl(var(--wa-tick))",
+          "tick-read": "hsl(var(--wa-tick-read))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -65,25 +87,27 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "slide-up": {
+          from: { transform: "translateY(100%)", opacity: "0" },
+          to: { transform: "translateY(0)", opacity: "1" },
+        },
+        "fade-in": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "slide-up": "slide-up 0.3s ease-out",
+        "fade-in": "fade-in 0.2s ease-out",
       },
     },
   },
